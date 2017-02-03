@@ -6,7 +6,7 @@
 		<title>Three.js Project</title>
 		<style>
 			body {
-				font-family: Monospace;
+				font-family: Helvetica;
 				background-color: #101010;
 				color: #fff;
 				margin: 0px;
@@ -15,13 +15,15 @@
 			canvas { width: 100%; height: 100% }
 			a { color: #f00; }
 		</style>
-		<script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r70/three.min.js"></script>
+		<!-- <script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r70/three.min.js"></script> -->
+		<script src="js/threejs/three.min.js"></script>
+		<script src="js/vr/WebVR.js"></script>
+		<script src="js/vr/VREffect.js"></script>
 		<script src="js/controls/PointerLockControl.js"></script>
 		<script src="js/controls/Detector.js"></script>
-
+		<script src="js/controls/VRControls.js"></script>
 	</head>
 	<body>
-		
 		<div id="blocker">
 			<div id="instructions">
 				<span style="font-size:40px">Click to play</span>
