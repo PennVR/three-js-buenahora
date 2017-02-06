@@ -58,6 +58,8 @@ if ( havePointerLock ) {
 var camera, scene, renderer;
 var raycaster;
 var controls;
+var prevTimeStamp, currTimeStamp;
+var fireworks = []
 
 var floor;
 var geometry, material, mesh;
@@ -75,8 +77,8 @@ if (Detector.webgl) {
 function init() {
   // Setup camera
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
-  // TODO : set cam. position
   scene = new THREE.Scene();
+  raycaster = new THREE.Raycaster();
   scene.add ( camera );
 
   // Setup light
@@ -90,29 +92,22 @@ function init() {
 
   // Create ray caster / crosshair
   var crosshair = new THREE.RingGeometry(0.01, 0.05, 32);
-  var crosshairMaterial = new THREE.MeshBasicMaterial({color: 0xeeee0, opacity: 0.5, 
+  var crosshairMaterial = new THREE.MeshBasicMaterial({color: "rgb(255, 0, 0)", opacity: 0.5, 
       transparent: true});
-  var crosshairmesh = new THREE.Mesh(crosshair, crosshairmesh);
+  var crosshairmesh = new THREE.Mesh(crosshair, crosshairMaterial);
   crosshairmesh.position.z = -2;
-  scene.add(crosshairmesh);
-  raycaster = new THREE.Raycaster();
+  camera.add(crosshairmesh);
 
   // Setup floor
   var texture = new THREE.TextureLoader().load( "media/ocean-texture.jpg" );
-  geometry = new THREE.PlaneGeometry( 2000, 2000, 100, 100 );
+  geometry = new THREE.PlaneGeometry( 2000, 2000, 1000, 1000 );
   geometry.rotateX( - Math.PI / 2 );
-  // for ( var i = 0, l = geometry.vertices.length; i < l; i ++ ) {
-  //   var vertex = geometry.vertices[ i ];
-  //   vertex.x += Math.random() * 20 - 10;
-  //   vertex.y += Math.random() * 2;
-  //   vertex.z += Math.random() * 20 - 10;
-  // }
-  // for ( var i = 0, l = geometry.faces.length; i < l; i ++ ) {
-  //   var face = geometry.faces[ i ];
-  //   face.vertexColors[ 0 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
-  //   face.vertexColors[ 1 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
-  //   face.vertexColors[ 2 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
-  // }
+
+  // Setup Mountains
+  geometry.vertices.forEach(function (v) { 
+    v.y = noise.simplex2(v.x / 10, v.z / 10) * 10;
+  });
+
   material = new THREE.MeshBasicMaterial( { map: texture } );
   mesh = new THREE.Mesh( geometry, material );
   scene.add( mesh );
@@ -125,17 +120,28 @@ function init() {
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
 
-  // Setup Mountains
-  // TODO
-
   // Setup Scenery
   // TODO
 
   window.addEventListener( 'resize', onWindowResize, false );
+  prevTimeStamp = new Date();
 }
 
 
 function animate() {
+  if (!currTimeStamp) {
+    currTimeStamp = new Date();
+  }
+  var deltaTime = currTimeStamp - prevTimeStamp;
+  prevTimeStamp = currTimeStamp;
+
+  // Animate Fireworks
+  fireworks.map(firework => {
+    firework.map(particle => {
+      
+    })
+  })
+
   requestAnimationFrame( animate );
   var center = new THREE.Vector2();
   raycaster.setFromCamera(center, camera);
@@ -148,3 +154,14 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
   renderer.setSize( window.innerWidth, window.innerHeight );
 }
+
+var Particle = class Particle {
+  constructor(pos, vel, acc, lifetime) {
+    this.pos = pos;
+    this.vel = vel;
+    this.acc = acc;
+    this.lifetime = lifetime;
+  }
+}
+
+
