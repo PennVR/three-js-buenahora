@@ -71,7 +71,7 @@ var geometry, material, mesh;
 
 var firework;
 
-var FIREWORK_INTERVAL = 1500;
+var FIREWORK_INTERVAL = 100;
 var FLOOR_WIDTH = 2000, FLOOR_HEIGHT = 2000;
 
 // Enforce WebGL and browser compatibility
@@ -132,11 +132,11 @@ function init() {
   scene.add( mesh );
 
   // basic fireworks
-  firework = new THREE.SphereGeometry( .2, 32, 32 )
-  firework.translate(0, 5, 20);
-  material = new THREE.MeshBasicMaterial( {color: "rgb(255, 0, 0)"} );
-  mesh = new THREE.Mesh( firework, material );
-  scene.add( mesh );
+  // firework = new THREE.CylinderGeometry( .5, .5, 2, 20);
+  // firework.translate(0, 5, 20);
+  // material = new THREE.MeshBasicMaterial( {color: "rgb(255, 0, 0)"} );
+  // mesh = new THREE.Mesh( firework, material );
+  // scene.add( mesh );
 
 
   // Setup renderer
@@ -161,7 +161,7 @@ function animate() {
 
   //Animate Fireworks
   fireworks.map(firework => {
-    firework.translate(0, .1, 0);
+    firework.geometry.translate(0, .2, 0);
   });
 
   requestAnimationFrame( animate );
@@ -177,31 +177,39 @@ function onWindowResize() {
   renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
-// var Fireworks = class Fireworks {
+var Fireworks = class Fireworks {
 
-//   constructor() {
-//     const MIN_PARTICLES = 10, MAX_PARTICLES = 30;
-//     const DEFAULT_LIFETIME = 300;
-//     const DEFAULT_POS = new THREE.Vector3(0, 30, 10);
-//     const DEFAULT_VEL = new THREE.Vector3(0, 80, 0);
-//     const DEFAULT_ACC = new THREE.Vector3(0, -9, 0);
+  constructor() {
+    this.geometry = new THREE.CylinderGeometry( .5, .5, 2, 20);
+    var x_pos = Math.random() * 100 - 50;
+    var z_pos = Math.random() * 100 - 50;
+    this.geometry.translate(x_pos, 5, z_pos);
+    this.material = new THREE.MeshBasicMaterial( {color: "rgb(255, 0, 0)"} );
+    this.cylinder = new THREE.Mesh(this.geometry, this.material);
+    scene.add(this.cylinder);
 
-//     this.particles = [];
+    // const MIN_PARTICLES = 10, MAX_PARTICLES = 30;
+      // const DEFAULT_LIFETIME = 300;
+      // const DEFAULT_POS = new THREE.Vector3(0, 30, 10);
+      // const DEFAULT_VEL = new THREE.Vector3(0, 80, 0);
+      // const DEFAULT_ACC = new THREE.Vector3(0, -9, 0);
 
-//     // define properties
-//     var pos, vel, acc; 
-//     var lifetime = 
-//     var color = 
-//     var sphereRadius = 
+      // this.particles = [];
 
-//     // create particles
+      // define properties
+      // var pos, vel, acc; 
+      // var lifetime = 
+      // var color = 
+      // var sphereRadius = 
+
+      // create particles
     
-//     var numParticles = Math.Random() * (MAX_PARTICLES - MIN_PARTICLES) + MIN_PARTICLES;
-//     for (var i = 0; i < numParticles; i++) {
-//       var particle = 
-//     }
-//   }
-// }
+    // var numParticles = Math.Random() * (MAX_PARTICLES - MIN_PARTICLES) + MIN_PARTICLES;
+    // for (var i = 0; i < numParticles; i++) {
+    //   var particle = 
+    // }
+  }
+}
 
 // var Particle = class Particle {
 //   constructor(pos, vel, acc, lifetime) {
@@ -250,8 +258,7 @@ function onWindowResize() {
   // fireworks.push(firework);
 
 
-// launch fireworks
+//launch fireworks
 setInterval(function() {
-  // TODO: add firework
-  console.log('boom');
+  fireworks.push(new Fireworks());
 }, FIREWORK_INTERVAL);
