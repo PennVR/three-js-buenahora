@@ -69,7 +69,7 @@ var fireworks = [];
 var floor;
 var geometry, material, mesh;
 
-var FIREWORK_INTERVAL = .0001;
+var FIREWORK_INTERVAL = 10;
 var FLOOR_WIDTH = 2000, FLOOR_HEIGHT = 2000;
 
 // Enforce WebGL and browser compatibility
@@ -102,34 +102,33 @@ function init() {
   light.position.set(0.5, 1, 0.75);
   scene.add(light);
 
+  var ambientLight = new THREE.AmbientLight(0x0c0c0c);
+  scene.add(ambientLight);
+
+  // add fog
+  scene.fog = new THREE.Fog(0xffffff, 0.015, 200);
+
   // Get pointer lock controls
   controls = new THREE.PointerLockControls( camera );
   scene.add( controls.getObject() );
 
-  // Create ray caster / crosshair
-  var crosshair = new THREE.RingGeometry(0.01, 0.05, 32);
-  var crosshairMaterial = new THREE.MeshBasicMaterial({color: "rgb(255, 0, 0)", opacity: 0.5, 
-      transparent: true});
-  var crosshairmesh = new THREE.Mesh(crosshair, crosshairMaterial);
-  crosshairmesh.position.z = -2;
-  camera.add(crosshairmesh);
-
-  // build the skybox Mesh 
-  geometry = new THREE.BoxGeometry(1000, 1000, 1000, 1, 1, 1);
-  texture = new THREE.TextureLoader().load( "media/sky-texture.jpg" );
-  material = new THREE.MeshBasicMaterial( { map: texture } );
-  mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
+  // // build the skybox Mesh 
+  // geometry = new THREE.BoxGeometry(1000, 1000, 1000, 1, 1, 1);
+  // texture = new THREE.TextureLoader().load( "media/sky-texture.jpg" );
+  // material = new THREE.MeshBasicMaterial( { map: texture } );
+  // // material = new THREE.MeshBasicMaterial();
+  // mesh = new THREE.Mesh(geometry, material);
+  // scene.add(mesh);
 
   // Setup floor
-  geometry = new THREE.PlaneGeometry(FLOOR_WIDTH, FLOOR_HEIGHT, 100, 100 );
+  geometry = new THREE.PlaneGeometry(FLOOR_WIDTH, FLOOR_HEIGHT, 500, 500);
   geometry.rotateX( - Math.PI / 2 );
 
-  // // Setup Mountains
-  // noise.seed(Math.random());
-  // geometry.vertices.forEach(function (v) { 
-  //   v.y = noise.simplex2(v.x / 10, v.z / 10) * 10;
-  // });
+  // Setup Mountains
+  noise.seed(Math.random());
+  geometry.vertices.forEach(function (v) { 
+    v.y = noise.simplex2(v.x / 10, v.z / 10) * 10;
+  });
   
   var texture = new THREE.TextureLoader().load( "media/floor-texture.jpg" );
   material = new THREE.MeshBasicMaterial( { map: texture } );
@@ -146,7 +145,7 @@ function init() {
 
   // Setup renderer
   renderer = new THREE.WebGLRenderer();
-  renderer.setClearColor( 0xffffff );
+  renderer.setClearColor(0x000080);
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
@@ -162,13 +161,15 @@ function init() {
 function animate() {
   currTimeStamp = Date.now();
   var deltaTime = currTimeStamp - prevTimeStamp;
+  var normalizedDeltaTime = deltaTime / 50;
   prevTimeStamp = currTimeStamp;
 
   //Animate Fireworks
   fireworks = fireworks.filter(firework => {
     var isActive = firework.lifetime > 0;
     if (isActive) {
-      var v = firework.velocity;
+      var v = firework.velocity.clone().multiplyScalar(normalizedDeltaTime);
+      firework.velocity.subVectors(firework.velocity, firework.acceleration);
       firework.geometry.translate(v.x, v.y, v.z);
       firework.lifetime -= deltaTime;
 
@@ -198,8 +199,9 @@ var Fireworks = class Fireworks {
 
   constructor() {
     this.geometry = new THREE.CylinderGeometry( .1, .1, .5, 6);
-    this.lifetime = 9000;
-    this.velocity = new THREE.Vector3(0, .8, 0);
+    this.lifetime = 10000;
+    this.velocity = new THREE.Vector3(0, 2, 0);
+    this.acceleration = new THREE.Vector3(0, .03, 0);
 
     // spawn at random position
     var RANGE = 100;
