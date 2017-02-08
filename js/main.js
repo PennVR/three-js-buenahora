@@ -70,11 +70,20 @@ var geometry, material, mesh;
 
 // fireworks variables
 var fireworks = [];
-const FIREWORKS_LAUNCH_INTERVAL = 120;
-const FIREWORKS_RANGE = 400;
-const FIREWORKS_MIN_DISTANCE = 100;
-const FIREWORKS_LIFETIME = 10000;
-const FIREWORKS_BOOMTIME = 8000;
+var fireworkColors = [
+  0xF90F07, // red
+  0xFFFFA6, // light yellow
+  0x6666FF, // purple, blue
+  0x800080, // purple
+  0xCC99CC, // light purple
+  0xFFAE19, // orange
+  0x99CC99  // light green
+]
+const FIREWORKS_LAUNCH_INTERVAL = 1200;
+const FIREWORKS_RANGE = 300;
+const FIREWORKS_MIN_DISTANCE = 60;
+const FIREWORKS_LIFETIME = 8000;
+const FIREWORKS_BOOMTIME = 6000;
 const MIN_PARTICLES = 15, MAX_PARTICLES = 30;
 const PARTICLE_VELOCITY = .6;
 const GRAVITY = new THREE.Vector3(0, .03, 0);
@@ -169,11 +178,33 @@ function animate() {
         firework.particles.map(particle => {
           var v = particle.velocity.clone().multiplyScalar(normalizedDeltaTime);
           particle.velocity.subVectors(particle.velocity, acc);
-          particle.geometry.translate(v.x, v.y, v.z);
+          particle.mesh.position.x += v.x;
+          particle.mesh.position.y += v.y;
+          particle.mesh.position.z += v.z;
+          
+          // debris
+          particle.createDebris();
+          particle.debris.filter(debrisParticle => {
+            debrisParticle.material.opacity -= .05;
+
+            var isDebrisActive = debrisParticle.material.opacity > 0;
+            if (!isDebrisActive) {
+              debrisParticle.geometry.dispose();
+              debrisParticle.material.dispose();
+              scene.remove(debrisParticle.mesh);
+            }
+
+            return isDebrisActive; // remove if inactive
+          });
         });
       }
     } else {
       firework.particles.map(particle => {
+        particle.debris.map(debrisParticle => {
+          debrisParticle.geometry.dispose();
+          debrisParticle.material.dispose();
+          scene.remove(debrisParticle.mesh);
+        });
         particle.geometry.dispose();
         particle.material.dispose();
         scene.remove(particle.mesh);
@@ -200,12 +231,12 @@ function onWindowResize() {
 var Fireworks = class Fireworks {
 
   constructor() {
-    this.geometry = new THREE.CylinderGeometry( .1, .1, .5, 6);
+    this.geometry = new THREE.CylinderGeometry( .5, .5, 2.5, 6);
     this.lifetime = FIREWORKS_LIFETIME;
     this.hasBoomed = false;
-    this.velocity = new THREE.Vector3(0, 5, 0);
+    this.velocity = new THREE.Vector3(0, 4.5, 0);
 
-    this.material = new THREE.MeshBasicMaterial( {color: 0xff0000 } );
+    this.material = new THREE.MeshBasicMaterial( {color: 0xffffff, fog: false } );
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     scene.add(this.mesh);
 
@@ -223,8 +254,9 @@ var Fireworks = class Fireworks {
   boom() {
     this.particles = [];
     var numParticles = Math.random() * (MAX_PARTICLES - MIN_PARTICLES) + MIN_PARTICLES;
+    var color = fireworkColors[parseInt(Math.random() * fireworkColors.length)];
     for (var i = 0; i < numParticles; i++) {
-      this.particles.push(new Particle(this.mesh.position));
+      this.particles.push(new Particle(this.mesh.position, color));
     }
 
     // remove cylinder
@@ -235,11 +267,13 @@ var Fireworks = class Fireworks {
 }
 
 var Particle = class Particle {
-  constructor(position) {
-    this.geometry = new THREE.SphereGeometry( .5, 3, 2);
-    this.geometry.translate(position.x, position.y, position.z);
-    this.material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+  constructor(position, color) {
+    this.geometry = new THREE.SphereGeometry(1.7, 5, 3);
+    this.material = new THREE.MeshBasicMaterial( {color: color, fog: false } );
     this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.position.x = position.x;
+    this.mesh.position.y = position.y;
+    this.mesh.position.z = position.z;
     scene.add(this.mesh);
 
     // particles explode in random directions
@@ -248,6 +282,15 @@ var Particle = class Particle {
     this.velocity.y = Math.random() * (2 * PARTICLE_VELOCITY) - PARTICLE_VELOCITY;
     this.velocity.z = Math.random() * (2 * PARTICLE_VELOCITY) - PARTICLE_VELOCITY;
     this.velocity.normalize();
+
+    this.debris = [];
+  }
+
+  createDebris() {
+    var debrisParticle = new Particle(this.mesh.position, this.material.color);
+    debrisParticle.material.transparent = true;
+    delete debrisParticle.velocity; // not in motion
+    this.debris.push(debrisParticle);
   }
 }
 
