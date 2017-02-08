@@ -69,9 +69,7 @@ var fireworks = [];
 var floor;
 var geometry, material, mesh;
 
-var firework;
-
-var FIREWORK_INTERVAL = 100;
+var FIREWORK_INTERVAL = .0001;
 var FLOOR_WIDTH = 2000, FLOOR_HEIGHT = 2000;
 
 // Enforce WebGL and browser compatibility
@@ -101,8 +99,8 @@ function init() {
 
   // Setup light
   var light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
-  light.position.set( 0.5, 1, 0.75 );
-  scene.add( light );
+  light.position.set(0.5, 1, 0.75);
+  scene.add(light);
 
   // Get pointer lock controls
   controls = new THREE.PointerLockControls( camera );
@@ -116,8 +114,14 @@ function init() {
   crosshairmesh.position.z = -2;
   camera.add(crosshairmesh);
 
+  // build the skybox Mesh 
+  geometry = new THREE.BoxGeometry(1000, 1000, 1000, 1, 1, 1);
+  texture = new THREE.TextureLoader().load( "media/sky-texture.jpg" );
+  material = new THREE.MeshBasicMaterial( { map: texture } );
+  mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
   // Setup floor
-  var texture = new THREE.TextureLoader().load( "media/floor-texture.jpg" );
   geometry = new THREE.PlaneGeometry(FLOOR_WIDTH, FLOOR_HEIGHT, 100, 100 );
   geometry.rotateX( - Math.PI / 2 );
 
@@ -126,10 +130,11 @@ function init() {
   // geometry.vertices.forEach(function (v) { 
   //   v.y = noise.simplex2(v.x / 10, v.z / 10) * 10;
   // });
-
+  
+  var texture = new THREE.TextureLoader().load( "media/floor-texture.jpg" );
   material = new THREE.MeshBasicMaterial( { map: texture } );
   mesh = new THREE.Mesh( geometry, material );
-  scene.add( mesh );
+  scene.add(mesh);
 
   // basic fireworks
   // firework = new THREE.CylinderGeometry( .5, .5, 2, 20);
@@ -160,8 +165,20 @@ function animate() {
   prevTimeStamp = currTimeStamp;
 
   //Animate Fireworks
-  fireworks.map(firework => {
-    firework.geometry.translate(0, .2, 0);
+  fireworks = fireworks.filter(firework => {
+    var isActive = firework.lifetime > 0;
+    if (isActive) {
+      var v = firework.velocity;
+      firework.geometry.translate(v.x, v.y, v.z);
+      firework.lifetime -= deltaTime;
+
+    } else {
+      firework.geometry.dispose();
+      firework.material.dispose();
+      scene.remove(firework.mesh);
+    }
+    // removes firework from array if inactive
+    return isActive;
   });
 
   requestAnimationFrame( animate );
@@ -180,13 +197,19 @@ function onWindowResize() {
 var Fireworks = class Fireworks {
 
   constructor() {
-    this.geometry = new THREE.CylinderGeometry( .5, .5, 2, 20);
-    var x_pos = Math.random() * 100 - 50;
-    var z_pos = Math.random() * 100 - 50;
+    this.geometry = new THREE.CylinderGeometry( .1, .1, .5, 6);
+    this.lifetime = 9000;
+    this.velocity = new THREE.Vector3(0, .8, 0);
+
+    // spawn at random position
+    var RANGE = 100;
+    var x_pos = Math.random() * (RANGE * 2) - RANGE;
+    var z_pos = Math.random() * (RANGE * 2) - RANGE;
+    
     this.geometry.translate(x_pos, 5, z_pos);
-    this.material = new THREE.MeshBasicMaterial( {color: "rgb(255, 0, 0)"} );
-    this.cylinder = new THREE.Mesh(this.geometry, this.material);
-    scene.add(this.cylinder);
+    this.material = new THREE.MeshBasicMaterial( {color: 0xff0000 } );
+    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    scene.add(this.mesh);
 
     // const MIN_PARTICLES = 10, MAX_PARTICLES = 30;
       // const DEFAULT_LIFETIME = 300;
