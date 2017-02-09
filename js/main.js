@@ -61,7 +61,6 @@ if ( havePointerLock ) {
 
 // Scene variables
 var camera, scene, renderer;
-var raycaster;
 var controls;
 var prevTimeStamp, currTimeStamp;
 
@@ -89,7 +88,7 @@ const PARTICLE_VELOCITY = .6;
 const GRAVITY = new THREE.Vector3(0, .03, 0);
 
 
-var FLOOR_WIDTH = 2000, FLOOR_HEIGHT = 2000;
+var FLOOR_WIDTH = 4000, FLOOR_HEIGHT = 4000;
 
 // Enforce WebGL and browser compatibility
 if (Detector.webgl) {
@@ -105,7 +104,6 @@ function init() {
   // Setup camera
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
   scene = new THREE.Scene();
-  raycaster = new THREE.Raycaster();
   scene.add ( camera );
 
   // Setup light
@@ -116,20 +114,19 @@ function init() {
   var ambientLight = new THREE.AmbientLight(0x0c0c0c);
   scene.add(ambientLight);
 
-  // add fog
-  scene.fog = new THREE.Fog(0xffffff, 0.015, 200);
-
   // Get pointer lock controls
   controls = new THREE.PointerLockControls( camera );
   scene.add( controls.getObject() );
 
   // setup floor
-  geometry = new THREE.PlaneGeometry(FLOOR_WIDTH, FLOOR_HEIGHT, 500, 500);
+  geometry = new THREE.PlaneGeometry(FLOOR_WIDTH, FLOOR_HEIGHT, 200, 200);
   geometry.rotateX( - Math.PI / 2 );
   // setup mountains from floor 
-  noise.seed(Math.random());
+
+  var noise = new Perlin();
+
   geometry.vertices.forEach(function (v) { 
-    v.y = noise.simplex2(v.x / 10, v.z / 10) * 10;
+    v.y = parseInt(noise.perlin(v.x/100, v.y/100, v.z/100) * 80 - 60) * 2;
   });
   var texture = new THREE.TextureLoader().load( "media/floor-texture.jpg" );
   material = new THREE.MeshBasicMaterial( { map: texture } );
@@ -217,7 +214,6 @@ function animate() {
 
   requestAnimationFrame(animate);
   var center = new THREE.Vector2();
-  raycaster.setFromCamera(center, camera);
   renderer.render(scene, camera);
 }
 
